@@ -433,7 +433,7 @@ def get_match_commands(engine_file, test_options, base_options,
         command += f' -rounds {games//2} -games 2 -repeat 2'
         command += ' -recover'
         command += f' -wait {cutechess_wait}'
-        command += f' -openings file={opening_file} order=random format={opening_file_format}'
+        command += f' -openings file={opening_file} order=random format={opening_file_format} plies=2'
         command += ' -resign movecount=6 score=700 twosided=true'
         command += ' -draw movenumber=30 movecount=6 score=1'
 
@@ -904,10 +904,8 @@ def main():
 
     instrum = ng.p.Instrumentation(**arg)
 
-    # deterministic_function in Nevergrad default since
-    # nevergrad==0.4.3 is true. Lakas by default is false.
     if not deterministic_function:
-        instrum.descriptors.deterministic_function = False
+        instrum.function.deterministic = False
 
     logger.info(f'parameter dimension: {instrum.dimension}')
     logger.info(f'deterministic function: {deterministic_function}')
@@ -1043,14 +1041,14 @@ def main():
 
         # Plot optimization data with hiplot, save it to html file.
         # Install the hiplot lib with "pip install hiplot".
-        try:
-            exp = nevergrad_logger.to_hiplot_experiment()
-        except ImportError as msg:
-            logger.warning(msg)
-        except Exception:
-            logger.exception('Unexpected exception.')
-        else:
-            exp.to_html(f'{optimizer_log_file}.html')
+        #try:
+        #    exp = nevergrad_logger.to_hiplot_experiment()
+        #except ImportError as msg:
+        #    logger.warning(msg)
+        #except Exception:
+        #    logger.exception('Unexpected exception.')
+        #else:
+        #    exp.to_html(f'{optimizer_log_file}.html')
 
     # Optimization done, get the best param.
     recommendation = optimizer.provide_recommendation()
