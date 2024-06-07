@@ -108,7 +108,8 @@ def log_cpu(proc_list, msg=''):
 
 
 class Objective:
-    def __init__(self, optimizer, engine_file, input_param, init_param,
+    def __init__(self, optimizer, engine_file, base_engine,
+                 input_param, init_param,
                  opening_file, opening_file_format, best_param, best_loss,
                  games_per_budget=100, depth=1000, concurrency=1,
                  base_time_sec=None, inc_time_sec=None,
@@ -131,6 +132,7 @@ class Objective:
                  enhance_posperfile=50):
         self.optimizer = optimizer
         self.engine_file = engine_file
+        self.base_engine = base_engine
         self.input_param = input_param
         self.init_param = init_param
         self.games_per_budget = games_per_budget
@@ -312,7 +314,8 @@ class Objective:
             logger.info(f'total nodes searched: {result}')
             return -result
         else:
-            result = engine_match(self.engine_file, test_options, base_options,
+            result = engine_match(self.engine_file, self.base_engine,
+                                  test_options, base_options,
                                   self.opening_file, self.opening_file_format,
                                   games=self.games_per_budget,
                                   depth=self.depth, concurrency=self.concurrency,
@@ -384,7 +387,7 @@ def read_result(line: str, match_manager) -> float:
     return result
 
 
-def get_match_commands(engine_file, test_options, base_options,
+def get_match_commands(engine_file, base_engine, test_options, base_options,
                        opening_file, opening_file_format, games, depth,
                        concurrency, base_time_sec, inc_time_sec, match_manager,
                        match_manager_path,
@@ -405,6 +408,9 @@ def get_match_commands(engine_file, test_options, base_options,
 
     if variant != 'normal':
         command += f' -variant {variant}'
+
+    if not base_engine:
+        base_engine = engine_file
 
     if match_manager == 'cutechess':
         command += f' -pgnout {pgn_output} fi'
@@ -429,7 +435,7 @@ def get_match_commands(engine_file, test_options, base_options,
                 command += f' -each tc=inf depth={depth}'
 
         command += f' -engine cmd={engine_file} name={test_name} timemargin={timemargin} proto={protocol} {test_options}'
-        command += f' -engine cmd={engine_file} name={base_name} timemargin={timemargin} proto={protocol} {base_options}'
+        command += f' -engine cmd={base_engine} name={base_name} timemargin={timemargin} proto={protocol} {base_options}'
         command += f' -rounds {games//2} -games 2 -repeat 2'
         command += ' -recover'
         command += f' -wait {cutechess_wait}'
@@ -447,7 +453,7 @@ def get_match_commands(engine_file, test_options, base_options,
         else:
             command += f' -each tc=0/0:{base_time_sec}+{inc_time_sec}'
         command += f' -engine cmd={engine_file} name={test_name} {test_options}'
-        command += f' -engine cmd={engine_file} name={base_name} {base_options}'
+        command += f' -engine cmd={base_engine} name={base_name} {base_options}'
         command += f' -rounds {games} -repeat 2'
         command += f' -openings file={opening_file}'
         command += f' -draw movenumber=40 movecount=10 score=0'
@@ -456,7 +462,7 @@ def get_match_commands(engine_file, test_options, base_options,
     return tour_manager, command
 
 
-def engine_match(engine_file, test_options, base_options, opening_file,
+def engine_match(engine_file, base_engine, test_options, base_options, opening_file,
                  opening_file_format, games=10, depth=None, concurrency=1,
                  base_time_sec=None, inc_time_sec=None,
                  match_manager='cutechess', match_manager_path=None,
@@ -467,7 +473,7 @@ def engine_match(engine_file, test_options, base_options, opening_file,
     result = ''
 
     tour_manager, command = get_match_commands(
-        engine_file, test_options, base_options, opening_file,
+        engine_file, base_engine, test_options, base_options, opening_file,
         opening_file_format, games, depth, concurrency, base_time_sec,
         inc_time_sec, match_manager, match_manager_path, variant, cutechess_debug,
         cutechess_wait, move_time, nodes, protocol, timemargin)
@@ -647,6 +653,8 @@ def main():
         epilog='%(prog)s')
     parser.add_argument('--engine', required=True,
                         help='Engine filename or engine path and filename.')
+    parser.add_argument('--base-engine', required=False,
+                        help='Engine to test against; same as engine if not specified.')
     parser.add_argument('--protocol', required=False,
                         help='Engine filename or engine path and filename, default=uci',
                         default='uci')
@@ -990,7 +998,8 @@ def main():
         curr_best_loss = optimizer.current_bests
         best_loss = curr_best_loss["average"].mean
 
-    objective = Objective(optimizer, args.engine, input_param, init_param,
+    objective = Objective(optimizer, args.engine, args.base_engine,
+                          input_param, init_param,
                           args.opening_file, opening_file_format,
                           best_param, best_loss,
                           games_per_budget=args.games_per_budget,
