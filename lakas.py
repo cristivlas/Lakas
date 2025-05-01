@@ -23,8 +23,10 @@ from collections import OrderedDict
 from subprocess import Popen, PIPE
 from pathlib import Path
 import logging
+import math
 import platform
 import shlex
+import shutil
 
 import nevergrad as ng
 import psutil
@@ -1031,7 +1033,11 @@ def main():
                           enhance_posperfile=args.enhance_posperfile)
 
     # Start the optimization.
-    for _ in range(optimizer.budget):
+    for i in range(optimizer.budget):
+
+        if input_data_file is not None:
+            shutil.copy(input_data_file, input_data_file + ".bak")
+
         x = optimizer.ask()
 
         loss = objective.run(**x.kwargs)
@@ -1039,7 +1045,7 @@ def main():
         # Scale up the loss for spsa optimizer to make
         # param value increment higher than 1,  default spsa_scale=500000.
         if optimizer_name == 'spsa':
-            loss = loss * spsa_scale
+            loss = loss * spsa_scale / math.sqrt(i + 1)
 
         optimizer.tell(x, loss)
 
