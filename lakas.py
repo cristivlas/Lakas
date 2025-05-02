@@ -557,6 +557,7 @@ def lakas_spsa(instrum, name, input_data_file, budget=100):
         logger.info(f'optimizer: {name}\n')
         optimizer = ng.optimizers.SPSA(instrum, budget=budget)
 
+    logger.info(f'SPSA: A={optimizer.A}, a={optimizer.a} c={optimizer.c}')
     return optimizer
 
 
@@ -1033,7 +1034,7 @@ def main():
                           enhance_posperfile=args.enhance_posperfile)
 
     # Start the optimization.
-    for i in range(optimizer.budget):
+    for _ in range(optimizer.budget):
 
         if input_data_file is not None:
             shutil.copy(input_data_file, input_data_file + ".bak")
@@ -1045,7 +1046,7 @@ def main():
         # Scale up the loss for spsa optimizer to make
         # param value increment higher than 1,  default spsa_scale=500000.
         if optimizer_name == 'spsa':
-            loss = loss * spsa_scale / math.sqrt(i + 1)
+            loss = loss * spsa_scale
 
         optimizer.tell(x, loss)
 
