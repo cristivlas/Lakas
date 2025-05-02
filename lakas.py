@@ -951,6 +951,8 @@ def main():
             args.bo_gp_param_alpha)
     elif optimizer_name == 'spsa':
         optimizer = lakas_spsa(instrum, optimizer_name, input_data_file, args.budget)
+        logger.info(f'Scale: {spsa_scale}\n')
+
     elif optimizer_name == 'cmaes':
         optimizer = lakas_cmaes(instrum, optimizer_name, input_data_file, args.budget)
     elif optimizer_name == 'ngopt':
