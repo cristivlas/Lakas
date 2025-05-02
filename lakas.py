@@ -1038,8 +1038,10 @@ def main():
     # Start the optimization.
     for _ in range(optimizer.budget):
 
-        if input_data_file is not None:
-            shutil.copy(input_data_file, input_data_file + ".bak")
+        if args.input_data_file is not None:
+            fname = args.input_data_file
+            if Path(fname).is_file():
+                shutil.copy(fname, fname + ".bak")
 
         x = optimizer.ask()
 
