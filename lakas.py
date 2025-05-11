@@ -260,21 +260,22 @@ class Objective:
 
         # Options for base engine.
         base_options = ''
-        if self.use_best_param:
-            for k, v in self.best_param.items():
-                base_options += f'option.{k}={v} '
-            logger2.info(f'base engine options: {base_options}')
-        else:
-            for k, v in self.init_param.items():
-                base_options += f'option.{k}={v} '
-            logger2.info(f'base engine options: {base_options}')
+        if self.base_engine is None:
+            if self.use_best_param:
+                for k, v in self.best_param.items():
+                    base_options += f'option.{k}={v} '
+                logger2.info(f'base engine options: {base_options}')
+            else:
+                for k, v in self.init_param.items():
+                    base_options += f'option.{k}={v} '
+                logger2.info(f'base engine options: {base_options}')
 
-        # Add common param.
-        if self.common_param is not None:
-            for k, v in self.common_param.items():
-                base_options += f'option.{k}={v} '
+            # Add common param.
+            if self.common_param is not None:
+                for k, v in self.common_param.items():
+                    base_options += f'option.{k}={v} '
 
-        base_options = base_options.rstrip()
+            base_options = base_options.rstrip()
 
         if self.optimizer_name != 'spsa' or self.optimizer.num_ask > 1:
             logger.info(f'best param: {opt_best_param[1]}')
@@ -1038,9 +1039,6 @@ def main():
     # Start the optimization.
     for _ in range(optimizer.budget):
 
-        if input_data_file is not None:
-            shutil.copy(input_data_file, input_data_file + ".bak")
-
         x = optimizer.ask()
 
         loss = objective.run(**x.kwargs)
@@ -1055,6 +1053,8 @@ def main():
         # Save optimization data to continue in the next session.
         # --output-data-file opt_data.dat ...
         if output_data_file is not None:
+            if Path(output_data_file).is_file():
+                shutil.move(output_data_file, output_data_file + ".bak")
             optimizer.dump(output_data_file)
 
         # Plot optimization data with hiplot, save it to html file.
