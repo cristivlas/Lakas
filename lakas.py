@@ -270,12 +270,12 @@ class Objective:
                     base_options += f'option.{k}={v} '
                 logger2.info(f'base engine options: {base_options}')
 
-            # Add common param.
-            if self.common_param is not None:
-                for k, v in self.common_param.items():
-                    base_options += f'option.{k}={v} '
+        # Add common param.
+        if self.common_param is not None:
+            for k, v in self.common_param.items():
+                base_options += f'option.{k}={v} '
 
-            base_options = base_options.rstrip()
+        base_options = base_options.rstrip()
 
         if self.optimizer_name != 'spsa' or self.optimizer.num_ask > 1:
             logger.info(f'best param: {opt_best_param[1]}')
