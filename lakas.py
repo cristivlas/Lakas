@@ -331,10 +331,7 @@ class Objective:
                                   cutechess_wait=self.cutechess_wait,
                                   move_time=self.move_time, nodes=self.nodes,
                                   protocol=self.protocol,
-                                  timemargin=self.timemargin,
-                                  # Hack: repurpose enhance_hahshmb and enhance_threads
-                                  hashmb=self.enhance_hashmb,
-                                  threads=self.enhance_threads)
+                                  timemargin=self.timemargin)
 
             min_res = 1.0 - result
 
@@ -398,7 +395,7 @@ def get_match_commands(engine_file, base_engine, test_options, base_options,
                        concurrency, base_time_sec, inc_time_sec, match_manager,
                        match_manager_path,
                        variant, cutechess_debug, cutechess_wait,
-                       move_time, nodes, protocol, timemargin, hashmb, threads):
+                       move_time, nodes, protocol, timemargin):
     if match_manager == 'cutechess':
         tour_manager = Path(match_manager_path)
     else:
@@ -421,26 +418,24 @@ def get_match_commands(engine_file, base_engine, test_options, base_options,
     if match_manager == 'cutechess':
         command += f' -pgnout {pgn_output} fi'
 
-        common_opts = f' option.OwnBook=false option.Threads={threads} option.Hash={hashmb}'
-
         # Set the move control.
         if move_time is not None:
-            command += f' -each st={move_time} {common_opts}'
+            command += f' -each st={move_time}'
         elif nodes is not None:
-            command += f' -each tc=inf nodes={nodes} {common_opts}'
+            command += f' -each tc=inf nodes={nodes}'
         else:
             if base_time_sec is not None and inc_time_sec is not None and depth is not None:
-                command += f' -each tc=0/0:{base_time_sec}+{inc_time_sec} depth={depth} {common_opts}'
+                command += f' -each tc=0/0:{base_time_sec}+{inc_time_sec} depth={depth}'
             elif base_time_sec is not None and inc_time_sec is not None:
-                command += f' -each tc=0/0:{base_time_sec}+{inc_time_sec} {common_opts}'
+                command += f' -each tc=0/0:{base_time_sec}+{inc_time_sec}'
             elif base_time_sec is not None:
-                command += f' -each tc=0/0:{base_time_sec} {common_opts}'
+                command += f' -each tc=0/0:{base_time_sec}'
             elif inc_time_sec is not None and depth is not None:
-                command += f' -each tc=0/0:{0}+{inc_time_sec} depth={depth} {common_opts}'
+                command += f' -each tc=0/0:{0}+{inc_time_sec} depth={depth}'
             elif inc_time_sec is not None:
-                command += f' -each tc=0/0:{0}+{inc_time_sec} {common_opts}'
+                command += f' -each tc=0/0:{0}+{inc_time_sec}'
             elif depth is not None:
-                command += f' -each tc=inf depth={depth} {common_opts}'
+                command += f' -each tc=inf depth={depth}'
 
         command += f' -engine cmd={engine_file} name={test_name} timemargin={timemargin} proto={protocol} {test_options}'
         command += f' -engine cmd={base_engine} name={base_name} timemargin={timemargin} proto={protocol} {base_options}'
@@ -477,16 +472,14 @@ def engine_match(engine_file, base_engine, test_options, base_options, opening_f
                  variant='normal', cutechess_debug=False,
                  cutechess_wait=5000, move_time=None, nodes=None,
                  protocol='uci',
-                 timemargin=50,
-                 hashmb=32,
-                 threads=1) -> float:
+                 timemargin=50) -> float:
     result = ''
 
     tour_manager, command = get_match_commands(
         engine_file, base_engine, test_options, base_options, opening_file,
         opening_file_format, games, depth, concurrency, base_time_sec,
         inc_time_sec, match_manager, match_manager_path, variant, cutechess_debug,
-        cutechess_wait, move_time, nodes, protocol, timemargin, hashmb, threads)
+        cutechess_wait, move_time, nodes, protocol, timemargin)
 
     # Execute the command line to start the match.
     if os_name.lower() == 'windows':
