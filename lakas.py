@@ -443,7 +443,7 @@ def get_match_commands(engine_file, base_engine, test_options, base_options,
         command += ' -recover'
         command += f' -wait {cutechess_wait}'
         command += f' -openings file={opening_file} order=random format={opening_file_format} plies=2'
-        command += ' -resign movecount=6 score=700 twosided=true'
+        command += ' -resign movecount=6 score=450 twosided=true'
         command += ' -draw movenumber=30 movecount=6 score=1'
 
         if cutechess_debug:
@@ -546,7 +546,7 @@ def lakas_tbpsa(instrum, name, input_data_file, naive=True,
     return optimizer
 
 
-def lakas_spsa(instrum, name, input_data_file, budget=100):
+def lakas_spsa(instrum, name, input_data_file, budget, base_perturbation):
     """
     Ref.: https://facebookresearch.github.io/nevergrad/optimizers_ref.html#nevergrad.optimization.optimizerlib.SPSA
     """
@@ -557,6 +557,9 @@ def lakas_spsa(instrum, name, input_data_file, budget=100):
     else:
         logger.info(f'optimizer: {name}\n')
         optimizer = ng.optimizers.SPSA(instrum, budget=budget)
+
+    if base_perturbation is not None:
+        optimizer.c = base_perturbation
 
     logger.info(f'SPSA: A={optimizer.A}, a={optimizer.a} c={optimizer.c}')
     return optimizer
@@ -755,6 +758,7 @@ def main():
                              'Example:\n'
                              '--optimizer spsa --spsa-scale 600000 ...',
                         default=500000)
+    parser.add_argument('--spsa-base-perturbation', required=False, type=float)
     parser.add_argument('--budget', required=False, type=int,
                         help='Iterations to execute, default=1000.',
                         default=1000)
@@ -865,6 +869,7 @@ def main():
     best_result_threshold = args.best_result_threshold
     deterministic_function = args.deterministic_function
     spsa_scale = args.spsa_scale
+    spsa_base_perturbation = args.spsa_base_perturbation
 
     opening_file_format = 'pgn'
     if not args.enhance:
@@ -951,7 +956,7 @@ def main():
             args.bo_utility_kappa, args.bo_utility_xi, args.budget,
             args.bo_gp_param_alpha)
     elif optimizer_name == 'spsa':
-        optimizer = lakas_spsa(instrum, optimizer_name, input_data_file, args.budget)
+        optimizer = lakas_spsa(instrum, optimizer_name, input_data_file, args.budget, spsa_base_perturbation)
         logger.info(f'Scale: {spsa_scale}\n')
 
     elif optimizer_name == 'cmaes':
