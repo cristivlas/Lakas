@@ -443,7 +443,7 @@ def get_match_commands(engine_file, base_engine, test_options, base_options,
         command += ' -recover'
         command += f' -wait {cutechess_wait}'
         command += f' -openings file={opening_file} order=random format={opening_file_format} plies=2'
-        command += ' -resign movecount=6 score=350 twosided=true'
+        command += ' -resign movecount=6 score=700 twosided=true'
         command += ' -draw movenumber=30 movecount=6 score=1'
 
         if cutechess_debug:
